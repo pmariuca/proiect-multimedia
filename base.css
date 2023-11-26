@@ -145,8 +145,13 @@ input[type="radio"]:checked::before {
     height: 400px;
 }
 
+#table {
+    padding: 2rem 1rem;
+}
+
 .analysis_title,
-.bubble_title {
+.bubble_title,
+.table_title {
     font-size: 20px;
     font-weight: 600;
     color: var(--color-text-dark);
@@ -154,21 +159,30 @@ input[type="radio"]:checked::before {
 }
 
 .analysis_svg,
-.bubble_chart_canvas {
+.bubble_chart_canvas,
+.container_table {
     width: 100%;
     text-align: center;
 }
 
-#tooltip {
-    position: absolute;
-    text-align: center;
-    width: auto;
-    height: auto;
-    padding: 5px;
-    font-size: 12px;
-    background-color: lightyellow;
-    border: 1px solid #d4d4d4;
-    pointer-events: none;
+.container_table > table {
+    margin: auto;
+}
+
+#move_top {
+    position: fixed;
+    right: 1%;
+    bottom: 1%;
+}
+
+.btn_move_top {
+    background: none;
+    color: inherit;
+    border: none;
+    padding: 0;
+    font: inherit;
+    cursor: pointer;
+    outline: inherit;
 }
 
 /* Footer Styles */
