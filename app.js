@@ -8,6 +8,12 @@ const btn_generate_analysis = document.querySelector(".btn_generate_analysis");
 const btn_generate_bubble = document.querySelector(".btn_generate_bubble");
 const btn_generate_table = document.querySelector(".btn_generate_table");
 const btn_move_top = document.querySelector(".btn_move_top");
+const go_to_filters = document.querySelector(".go_to_filters");
+const go_to_analysis = document.querySelector(".go_to_analysis");
+const go_to_chart = document.querySelector(".go_to_chart");
+const go_to_table = document.querySelector(".go_to_table");
+const go_to_info = document.querySelector(".go_to_info");
+
 
 let PIB_data;
 let speranta_viata_data;
@@ -161,6 +167,23 @@ function calculateAverage(data, indicator) {
     return sum / relevant_values.length;
 }
 
+// Event listeners pentru apasare butoane nav
+go_to_filters.addEventListener("click", function () {
+    document.getElementById("filters").scrollIntoView({ behavior: "smooth" });
+})
+go_to_analysis.addEventListener("click", function () {
+    document.getElementById("analysis").scrollIntoView({ behavior: "smooth" });
+})
+go_to_chart.addEventListener("click", function () {
+    document.getElementById("bubble").scrollIntoView({ behavior: "smooth" });
+})
+go_to_table.addEventListener("click", function () {
+    document.getElementById("table").scrollIntoView({ behavior: "smooth" });
+})
+go_to_info.addEventListener("click", function () {
+    document.getElementById("footer_info").scrollIntoView({ behavior: "smooth" });
+})
+
 // Event listeners pentru apasarea butoanelor de generate
 btn_generate_analysis.addEventListener("click", e => {
     document.getElementById("analysis").scrollIntoView({ behavior: "smooth" });
@@ -198,6 +221,11 @@ function drawChart(data, svg_width, svg_height, country, indicator) {
         .attr("width", svg_width)
         .attr("height", svg_height);
 
+    const placeholder = document.getElementById("analysis_placeholder");
+    placeholder.style.display = "none";
+
+    svg.style("display", "inline-block");
+
     svg.selectAll("*").remove();
 
     const margin = { top: 40, right: 40, bottom: 60, left: 60 };
@@ -208,8 +236,8 @@ function drawChart(data, svg_width, svg_height, country, indicator) {
     const country_title = data[0].tara;
 
     const xScale = d3.scaleLinear()
-        .domain(d3.extent(data, d => d.an))
-        .range([0, svg_width]);
+        .domain(d3.extent(data, d => parseInt(d.an)))
+        .range([0, inner_width]);
 
     const yScale = d3.scaleLinear()
         .domain([0, d3.max(data, d => d.valoare)])
@@ -223,7 +251,7 @@ function drawChart(data, svg_width, svg_height, country, indicator) {
 
     g.append("g").call(yAxis);
     g.append("g").call(xAxis)
-        .attr("transform", `translate(0,${innerHeight})`);
+        .attr("transform", `translate(0,${inner_height})`);
 
     const line = d3.line()
         .x(d => xScale(d.an))
@@ -269,11 +297,37 @@ function drawChart(data, svg_width, svg_height, country, indicator) {
         .attr("height", svg_height)
         .attr("fill", "none")
         .attr("stroke", "black");
+
+    const tooltip = d3.select("#tooltip");
+
+    // Adăugarea unor cercuri pentru fiecare dată în parte pe grafic
+    g.selectAll("circle")
+        .data(data)
+        .enter().append("circle")
+        .attr("cx", d => xScale(d.an))
+        .attr("cy", d => yScale(d.valoare))
+        .attr("r", 5)  // raza cercului
+        .attr("fill", "#674188")
+        .on("mouseover", function(event, d) {
+            tooltip.style("display", "block")
+                .style("left", (event.pageX + 10) + "px")
+                .style("top", (event.pageY - 10) + "px")
+                .html(`An: ${d.an}<br>${d.indicator}: ${d.valoare}`);
+        })
+        .on("mouseout", function() {
+            tooltip.style("display", "none");
+        });
 }
 function drawBubbleChart(data) {
     const canvas = document.getElementById("bubble_canvas");
+    canvas.style.display = "inline-block";
     const ctx = canvas.getContext("2d");
     ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    const placeholder = document.getElementById("bubble_placeholder");
+    placeholder.style.display = "none";
+
+    document.querySelector(".porneste_animatia").disabled = false;
 
     ctx.fillStyle = "black";
     ctx.font = "20px Open Sans";
@@ -329,6 +383,11 @@ function createTable(data, year) {
         table_container.removeChild(table_container.firstChild);
     }
 
+    table_container.style.height = "auto";
+    table_container.style.display = "inline-block";
+
+    document.getElementById("table_placeholder").style.display = "none";
+
     const table = document.createElement("table");
     table.style.borderCollapse = 'collapse';
     const thead = table.createTHead();
@@ -367,5 +426,37 @@ function createTable(data, year) {
     table_container.appendChild(table);
 }
 
+// Functie pentru animatie bubble
+function animateBubbleChart(data, ani) {
+    let indexAn = 0;
 
+    function updateChart() {
+        if (indexAn < ani.length) {
+            const an = ani[indexAn];
+            const selected_country = getSelectedRadioValue("country");
+            const data = filterDataWithoutIndicator(selected_country, an);
+
+            if (data.length > 0) {
+                drawBubbleChart(data);
+            } else {
+                console.error("Nu există date valide pentru anul " + an);
+            }
+
+            indexAn++;
+            if (indexAn < ani.length) {
+                setTimeout(updateChart, 2000);
+            } else {
+                document.querySelector(".porneste_animatia").disabled = false;
+            }
+        }
+    }
+
+    updateChart();
+}
+document.querySelector(".porneste_animatia").addEventListener("click", function() {
+    this.disabled = true;
+    const data = [...PIB_data, ...speranta_viata_data, ...populatie_data];
+    const ani = [2000, 2001, 2002, 2003, 2004, 2005, 2006, 2007, 2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015, 2016, 2017, 2018]
+    animateBubbleChart(data, ani);
+});
 
